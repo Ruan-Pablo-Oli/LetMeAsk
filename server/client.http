@@ -1,0 +1,15 @@
+# Variables
+
+@baseUrl = htpp://localhost:3333
+
+# Health check
+
+GET {{{baseUrl}}}/health
+
+###
+
+#GET rooms
+
+GET {{baseUrl}}/rooms
+
+
