@@ -1,0 +1,1 @@
+create EXTENSION IF NOT EXISTS vector;
