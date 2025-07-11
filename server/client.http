@@ -1,6 +1,6 @@
 # Variables
 
-@baseUrl = htpp://localhost:3333
+@baseUrl = http://localhost:3333
 
 # Health check
 
