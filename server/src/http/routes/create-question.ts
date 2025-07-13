@@ -1,4 +1,5 @@
 import { and, eq, sql } from 'drizzle-orm'
+import { vector } from 'drizzle-orm/pg-core'
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
 import { z } from 'zod/v4'
 import { id } from 'zod/v4/locales'
@@ -23,22 +24,24 @@ export const createQuestionRoute: FastifyPluginCallbackZod = (app) => {
       const { question } = request.body
       const { roomId } = request.params
 
-      const embeddings = generateEmbeddings(question)
+      const embeddings = await generateEmbeddings(question)
+
+      const vectorAsSql = sql.raw(`'[${embeddings.join(',')}]'::vector`)
 
       const chunks = await db
         .select({
           id: schema.audioChunks.id,
           transcription: schema.audioChunks.transcription,
-          similarity: sql<number>`1 - (${schema.audioChunks.embeddings} <=> ${embeddings})`,
+          similarity: sql<number>`1 - (${schema.audioChunks.embeddings} <=> ${vectorAsSql})`,
         })
         .from(schema.audioChunks)
         .where(
           and(
             eq(schema.audioChunks.roomId, roomId),
-            sql`1 - (${schema.audioChunks.embeddings} <=> ${embeddings}) > 0.7`
+            sql`1 - (${schema.audioChunks.embeddings} <=> ${vectorAsSql}) > 0.7`
           )
         )
-        .orderBy(sql`${schema.audioChunks.embeddings} <=> ${embeddings}`)
+        .orderBy(sql`${schema.audioChunks.embeddings} <=> ${vectorAsSql}`)
         .limit(3)
 
       return chunks
