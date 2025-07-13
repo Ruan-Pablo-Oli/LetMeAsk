@@ -1,4 +1,5 @@
 import { GoogleGenAI } from '@google/genai'
+import { error } from 'console'
 import { env } from '../env.ts'
 
 const gemini = new GoogleGenAI({
@@ -42,4 +43,44 @@ export async function generateEmbeddings(text: string) {
     throw new Error('Não foi possível gerar os embeddings')
   }
   return response.embeddings[0].values
+}
+
+export async function generateAnswer(
+  question: string,
+  transriptions: string[]
+) {
+  const context = transriptions.join('\n\n')
+
+  const prompt = ` 
+  Com base no texto abaixo como contexto, responda a pergunta de forma clara e precisa em português do brasil .
+  
+  
+
+  CONTEXO: ${context},
+  
+
+  PERGUNTA: ${question}
+
+  INSTRUÇÕES: 
+  - Use apenas informações contidas no contexto enviado;
+  - Se a resposta não for encontrada, responda que não possui informações suficientes para responder.
+  - Seja objetivo;
+  - Mantenha um tom educativo e profissional;
+  - Cite trechos relevantes do contexto se apropriado;
+  - Se for o citar o contexto, utilize o termo conteúdo da aula
+`.trim()
+  const response = await gemini.models.generateContent({
+    model,
+    contents: [
+      {
+        text: prompt,
+      },
+    ],
+  })
+
+  if (!response.text) {
+    throw new Error('Falha ao gerar resposta pelo gemini')
+  }
+
+  return response.text
 }
