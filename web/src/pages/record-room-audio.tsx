@@ -38,6 +38,8 @@ export function RecordRoomAudio() {
     )
 
     const result = await response.json()
+
+    console.log(result)
   }
 
   async function startRecording() {
