@@ -28,7 +28,22 @@ export const uploadAudioRoute: FastifyPluginCallbackZod = (app) => {
       const transcription = await transcribeAudio(audioAsBase64, audio.mimetype)
       const embeddings = await generateEmbeddings(transcription)
 
-      return { transcription, embeddings }
+      const result = await db
+        .insert(schema.audioChunks)
+        .values({
+          roomId,
+          transcription,
+          embeddings,
+        })
+        .returning()
+
+      const chunk = result[0]
+
+      if (!chunk) {
+        throw new Error('Erro ao  salvar chunk de áudio')
+      }
+
+      return reply.status(201).send({ chunkId: chunk.id })
     }
   )
 }
